@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="utf-8">
+    <title>ldg</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"/>
+    <script src="/js/stomp.min2.3.3.js"></script>
+    <script src="/js/jquery-3.5.1.min.js"></script>
+    <link href="/css/room.css" rel="stylesheet">
+    <script th:inline="javascript">
+        $(() => {
+            let username = '';
+
+            if ([[${room.roomId != null}]]) {
+                username = prompt("닉네임 입력 : ");
+            }
+
+            $("#btn-create").on("click", function (e) {
+                e.preventDefault();
+                let name = $("input[name='name']").val();
+
+                if (name.trim() === '') {
+                    alert("이름을 작성 해주세요.");
+                } else {
+                    $("#form-create").submit();
+                }
+            });
+
+            let roomId = [[${room.roomId}]];
+
+            let sockJs = new SockJS("/stomp/chat");
+            let stomp = Stomp.over(sockJs);
+
+            stomp.connect({}, function () {
+                stomp.subscribe("/sub/chat/room/" + roomId, function (chat) {
+                    let content = JSON.parse(chat.body);
+
+                    let writer = content.writer;
+                    let str;
+
+                    if (writer === username) {
+                        str = `
+                            <div class="chat-message-right pb-4">
+                                <div>
+                                    <img src="/images/user_icon1.png" class="rounded-circle mr-1" alt="Chris Wood" width="40" height="40">
+                                    <div class="text-muted small text-nowrap mt-2">00:00</div>
+                                </div>
+                                <div class="flex-shrink-1 bg-light rounded py-2 px-3 mr-3">
+                                    <div class="font-weight-bold mb-1">${writer}</div>
+                                    ${content.message}
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        str = `
+                            <div class="chat-message-left pb-4">
+                                <div>
+                                    <img src="/images/user_icon2.png" class="rounded-circle mr-1" alt="Sharon Lessman" width="40" height="40">
+                                    <div class="text-muted small text-nowrap mt-2">00:00</div>
+                                </div>
+                                <div class="flex-shrink-1 bg-light rounded py-2 px-3 ml-3">
+                                    <div class="font-weight-bold mb-1">${writer}</div>
+                                    ${content.message}
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    $("#msgArea").append(str);
+                });
+
+                stomp.send('/pub/chat/enter', {}, JSON.stringify({roomId: roomId, writer: username}))
+            });
+
+            $("#button-send").on("click", function (e) {
+                let msg = document.getElementById("msg");
+
+                stomp.send('/pub/chat/message', {}, JSON.stringify({
+                    roomId: roomId,
+                    message: msg.value,
+                    writer: username
+                }));
+                msg.value = '';
+            });
+        });
+    </script>
+</head>
+<body>
+<div class="container p-0">
+    <div class="card">
+        <div class="row g-0">
+            <div class="col-12 col-lg-5 col-xl-3 border-right">
+                <div class="flex-grow-0 py-3 px-4 border-top">
+                    <form th:action="@{/chat/room}" method="post" id="form-create" class="input-group">
+                        <input type="text" class="form-control" name="name" placeholder="채팅방 제목 입력">
+                        <button class="btn btn-primary" id="btn-create">제작</button>
+                    </form>
+                </div>
+                <div th:each="room : ${list}">
+                    <a th:href="@{/chat/room(roomId=${room.roomId})}" class="list-group-item list-group-item-action border-0" >
+                        <div class="d-flex align-items-start">
+                            <img src="/images/room_icon.png" class="rounded-circle mr-1" alt="Jennifer Chang" width="40" height="40">
+                            [[${room.name}]]
+                        </div>
+                    </a>
+                </div>
+                <hr class="d-block d-lg-none mt-1 mb-0">
+            </div>
+            <div class="col-12 col-lg-7 col-xl-9">
+                <div class="py-2 px-4 border-bottom d-none d-lg-block">
+                    <div class="d-flex align-items-center py-1">
+                        <div class="position-relative">
+                            <img src="/images/room_icon.png" class="rounded-circle mr-1" alt="Sharon Lessman" width="40" height="40">
+                        </div>
+                        <div class="flex-grow-1 pl-3">
+                            <strong th:if="${room.roomId == null}">채팅방을 선택해주세요.</strong>
+                            <strong th:if="${room.roomId != null}">[[${room.name}]]</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="position-relative">
+                    <div class="chat-messages p-4" id="msgArea" th:if="${room.roomId != null}"></div>
+                </div>
+                <div class="flex-grow-0 py-3 px-4 border-top">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Type your message" id="msg">
+                        <button class="btn btn-primary" th:if="${room.roomId == null}">전송</button>
+                        <button class="btn btn-primary" th:if="${room.roomId != null}" id="button-send">전송</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

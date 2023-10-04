@@ -1,0 +1,67 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.1.4'
+	id 'io.spring.dependency-management' version '1.1.3'
+}
+
+group = 'com.chatex'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	sourceCompatibility = '17'
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+//	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity5:3.1.3.RELEASE'
+
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	runtimeOnly 'com.h2database:h2'
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	implementation 'org.webjars.bower:jquery:3.7.1'
+	implementation 'org.webjars:webjars-locator-core'
+//	implementation 'org.springframework:spring-messaging:6.0.3'
+
+
+	//implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity5'
+	testImplementation 'org.springframework.security:spring-security-test'
+	//json
+	implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
+	//socket
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+	//stomp
+	implementation 'org.webjars:stomp-websocket:2.3.4'
+	//sockjs
+	implementation 'org.webjars:sockjs-client:1.5.1'
+
+	//gson
+	implementation 'com.google.code.gson:gson:2.10.1'
+	implementation 'com.querydsl:querydsl-jpa'
+	implementation group: 'net.coobird', name: 'thumbnailator', version: '0.4.8'
+
+	//마리아db
+	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+
+	implementation group: 'net.coobird', name: 'thumbnailator', version: '0.4.8'
+
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
